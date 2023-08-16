@@ -11,6 +11,7 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torch.utils.tensorboard import SummaryWriter
 import torchvision.ops as tops
 import yaml
+from pt_soft_nms import batched_soft_nms, soft_nms
 
 class FasterRCNN(nn.Module):
 
@@ -20,8 +21,8 @@ class FasterRCNN(nn.Module):
         self.epochs = cfg['train']['max_epoch'] 
         self.batch_size = cfg['train']['batch_size']
 
-        self.ap = MeanAveragePrecision(box_format='xyxy', num_classes=self.n_classes, reduction='none')
-        self.network = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=None, progress=True, num_classes = self.n_classes)
+        self.ap = MeanAveragePrecision(box_format='xyxy', class_metrics=True, iou_type='bbox')
+        self.network = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, progress=True, num_classes = self.n_classes)
         self.network = self.network.float().cuda()
 
         self.prob_th = cfg['val']['prob_th']
@@ -133,6 +134,7 @@ class FasterRCNN(nn.Module):
             labels = out[b_idx]['labels']
 
             # non maximum suppression
+            # TODO add soft NMS here. 
             refined = tops.nms(boxes, scores, self.overlapping_th)
             refined_boxes = boxes[refined]
             refined_scores = scores[refined]
@@ -161,6 +163,55 @@ class FasterRCNN(nn.Module):
                 surviving_dict['scores'] = torch.empty(0).cuda()
 
             predictions_dictionaries.append(surviving_dict)
+
+        return predictions_dictionaries
+    
+    def test_image(self, image):
+        # moving everything to cuda here to avoid stalling when workers != 0
+
+        out = self.network(image)
+
+        # here start the postprocessing 
+        # b = len(image)
+        predictions_dictionaries = []
+
+        # for b_idx in range(b):
+
+        scores = out[0]['scores']
+        boxes = out[0]['boxes']
+        labels = out[0]['labels']
+
+        # non maximum suppression
+        # refined_1 = soft_nms(boxes, scores, sigma=0.5, score_threshold=self.overlapping_th)
+        refined = tops.nms(boxes, scores, self.overlapping_th)
+        # refined = refined_2
+        refined_boxes = boxes[refined]
+        refined_scores = scores[refined]
+        refined_labels = labels[refined]
+
+        # keeping only high scores
+        high_scores = refined_scores > self.prob_th
+
+        # if any scores are above self.prob_th we can compute metrics
+        if high_scores.sum():
+            surviving_boxes = refined_boxes[high_scores]
+            surviving_scores = refined_scores[high_scores]
+            surviving_labels = refined_labels[high_scores]
+            
+            surviving_dict = {}
+            surviving_dict['boxes'] = surviving_boxes.cuda()
+            surviving_dict['labels'] = surviving_labels.cuda()
+            surviving_dict['scores'] = surviving_scores.cuda()
+        
+        # if not populate prediction dict with empty tensor to get 0 for ap and ap_ins
+        # define zero sem and ins masks for iou metric
+        else:
+            surviving_dict = {}
+            surviving_dict['boxes'] = torch.empty((0, 4)).cuda()
+            surviving_dict['labels'] = torch.empty(0).cuda()
+            surviving_dict['scores'] = torch.empty(0).cuda()
+
+        predictions_dictionaries.append(surviving_dict)
 
         return predictions_dictionaries
 

@@ -1,21 +1,28 @@
 experiment:
-    id: fasterrcnn_plants
+    id: fasterrcnn
     seed: 1324
 
-checkpoint: ''
-tensorboard: ''
+checkpoint: './output/frcnn_beets/'
+tensorboard: './output/frcnn_beets/'
 
 ##Data
 data:
-    train: ''
-    val: ''
-    
+    # train: '/mnt/d/datasets/UoS_Drone/beets/'
+    # val: '/mnt/d/datasets/UoS_Drone/beets/'
+    # train: '/mnt/d/datasets/Phenobench/train/'
+    # val: '/mnt/d/datasets/Phenobench/val/'
+
+images:
+    # dir: '/mnt/d/datasets/UoS_Drone/beets/images/'
+    dir: '/mnt/d/datasets/portal_rawdatasets/canola_uav/'
+    tile: 1024
+
 ##Training
 train:
     n_gpus: 1
-    workers: 10 
+    workers: 0
     max_epoch: 200
-    batch_size: 12
+    batch_size: 1
     n_classes: 3
     overfit: False
     lr: 0.0001
