@@ -1,0 +1,70 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train RCNN",
+            "type": "python",
+            "request": "launch",
+            "program": "train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-c","configs/fasterrcnn_plants.yaml"
+            ],
+            "env": {
+                "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION":"python",
+            }
+        },
+        {
+            "name": "Test RCNN",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-c","configs/fasterrcnn_plants.yaml",
+                "-w", "checkpoints/last.pt",
+                "-o", "output"
+            ],
+            "env": {
+                "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION":"python",
+            }
+        },
+        {
+            "name": "Infer RCNN",
+            "type": "python",
+            "request": "launch",
+            "program": "infer.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-c","configs/fasterrcnn_plants.yaml",
+                "-w", "checkpoints/last.pt",
+                "-o", "output"
+            ],
+            "env": {
+                "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION":"python",
+            }
+        },
+        {
+            "name": "Infer8k RCNN",
+            "type": "python",
+            "request": "launch",
+            "program": "infer_8k.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-c","configs/fasterrcnn_plants.yaml",
+                "-w", "checkpoints/last.pt",
+                "-o", "output"
+            ],
+            "env": {
+                "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION":"python",
+            }
+        }
+    ]
+}
